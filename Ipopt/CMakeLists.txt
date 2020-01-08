@@ -39,6 +39,39 @@ add_definitions(-DIPOPT_BUILD)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config.h.in       ${CMAKE_BINARY_DIR}/Ipopt/include/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config_ipopt.h.in ${CMAKE_BINARY_DIR}/Ipopt/include/config_ipopt.h)
 
+#
+# pkg-config file generation
+#
+
+set(prefix               "${CMAKE_INSTALL_PREFIX}")
+set(exec_prefix          "\${prefix}")
+set(libdir               "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+set(includedir           "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
+set(IPOPTLIB_LFLAGS_NOPC "-lm -ldl")
+set(IPOPTLIB_PCFILES     "")
+if (COIN_HAS_LAPACK OR COIN_USE_LAPACK)
+  set(IPOPTLIB_PCFILES "${IPOPTLIB_PCFILES} -llapack")
+endif ()
+if (COIN_HAS_BLAS OR COIN_USE_BLAS)
+  set(IPOPTLIB_PCFILES "${IPOPTLIB_PCFILES} -lblas")
+endif ()
+if (COIN_ENABLE_DOWNLOAD_CLAPACK)
+  set(IPOPTLIB_PCFILES "${IPOPTLIB_PCFILES} -lf2c")
+endif ()
+set(PACKAGE_VERSION "${IPOPT_VERSION}")
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../ipopt.pc.in ${CMAKE_BINARY_DIR}/Ipopt/ipopt.pc @ONLY)
+
+set(libdir         "${CMAKE_CURRENT_SOURCE_DIR}")
+set(abs_source_dir "${CMAKE_BINARY_DIR}/bin")
+
+install(FILES ${CMAKE_BINARY_DIR}/Ipopt/ipopt.pc
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkg-config/)
+
+#
+# Build
+#
+
 set (IPOPT_SRC_ALGORITHM_LIST ${CMAKE_CURRENT_SOURCE_DIR}/../src/Algorithm/IpAdaptiveMuUpdate.cpp
                               ${CMAKE_CURRENT_SOURCE_DIR}/../src/Algorithm/IpAlgBuilder.cpp
                               ${CMAKE_CURRENT_SOURCE_DIR}/../src/Algorithm/IpAlgorithmRegOp.cpp
@@ -347,7 +380,7 @@ if (IPOPT_HAS_AMPL)
   set_include_directories(ipopt)
   
   install(TARGETS ipopt
-          DESTINATION bin)
+          DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR})
   
   include(${CMAKE_SOURCE_DIR}/ThirdParty/IpoptTests.cmake)
 endif ()
@@ -906,12 +939,12 @@ set(ALL_HDRS ${LINALG_HDRS}
 	     ${LINEARSOLVERS_HDRS})
 
 install(FILES ${ALL_HDRS} 
-        DESTINATION include/coin)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/coin)
 
 install(TARGETS libipopt
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib/static)
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/static)
 
 install(FILES AUTHORS 
-	DESTINATION share/coin/doc/Ipopt/)
+	DESTINATION ${DATAROOTDIR}/coin/doc/Ipopt/)
